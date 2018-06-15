@@ -13,39 +13,39 @@ import java.io.IOException;
 import java.util.HashMap;
 
 public class ApiLoginAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
-	private static final String BODY_ATTRIBUTE = ApiLoginAuthenticationFilter.class.getSimpleName() + ".body";
+    private static final String BODY_ATTRIBUTE = ApiLoginAuthenticationFilter.class.getSimpleName() + ".body";
 
-	private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
-	public ApiLoginAuthenticationFilter(ObjectMapper objectMapper) {
-		this.objectMapper = objectMapper;
-	}
+    public ApiLoginAuthenticationFilter(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
 
-	@Override
-	public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
-		HttpServletRequest request = (HttpServletRequest) req;
-		HttpServletResponse response = (HttpServletResponse) res;
+    @Override
+    public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
+        HttpServletRequest request = (HttpServletRequest) req;
+        HttpServletResponse response = (HttpServletResponse) res;
 
-		// Parse the request body as a HashMap and populate a request attribute
-		if (requiresAuthentication(request, response)) {
-			UsernamePasswordRequest usernamePasswordRequest = objectMapper.readValue(request.getInputStream(), UsernamePasswordRequest.class);
-			request.setAttribute(BODY_ATTRIBUTE, usernamePasswordRequest);
-		}
+        // Parse the request body as a HashMap and populate a request attribute
+        if (requiresAuthentication(request, response)) {
+            UsernamePasswordRequest usernamePasswordRequest = objectMapper.readValue(request.getInputStream(), UsernamePasswordRequest.class);
+            request.setAttribute(BODY_ATTRIBUTE, usernamePasswordRequest);
+        }
 
-		super.doFilter(req, res, chain);
-	}
+        super.doFilter(req, res, chain);
+    }
 
-	protected String obtainUsername(HttpServletRequest request) {
-		UsernamePasswordRequest usernamePasswordRequest = (UsernamePasswordRequest) request.getAttribute(BODY_ATTRIBUTE);
-		return usernamePasswordRequest.get(getUsernameParameter());
-	}
+    protected String obtainUsername(HttpServletRequest request) {
+        UsernamePasswordRequest usernamePasswordRequest = (UsernamePasswordRequest) request.getAttribute(BODY_ATTRIBUTE);
+        return usernamePasswordRequest.get(getUsernameParameter());
+    }
 
-	protected String obtainPassword(HttpServletRequest request) {
-		UsernamePasswordRequest usernamePasswordRequest = (UsernamePasswordRequest) request.getAttribute(BODY_ATTRIBUTE);
-		return usernamePasswordRequest.get(getPasswordParameter());
-	}
+    protected String obtainPassword(HttpServletRequest request) {
+        UsernamePasswordRequest usernamePasswordRequest = (UsernamePasswordRequest) request.getAttribute(BODY_ATTRIBUTE);
+        return usernamePasswordRequest.get(getPasswordParameter());
+    }
 
-	private static class UsernamePasswordRequest extends HashMap<String, String> {
-		// Nothing, just a type marker
-	}
+    private static class UsernamePasswordRequest extends HashMap<String, String> {
+        // Nothing, just a type marker
+    }
 }
