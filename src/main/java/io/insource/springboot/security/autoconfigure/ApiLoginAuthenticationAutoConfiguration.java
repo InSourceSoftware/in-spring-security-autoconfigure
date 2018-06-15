@@ -2,12 +2,13 @@ package io.insource.springboot.security.autoconfigure;
 
 import io.insource.springboot.security.annotation.EnableApiLogin;
 import io.insource.springboot.security.condition.EnableAnnotationCondition;
-import io.insource.springboot.security.config.SecurityConfigurationProperties;
+import io.insource.springboot.security.config.SecurityConfiguration;
 import io.insource.springboot.security.filter.ApiLoginAuthenticationFilter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
@@ -45,13 +46,13 @@ import java.util.Arrays;
 @Conditional(ApiLoginAuthenticationAutoConfiguration.EnableApiLoginCondition.class)
 @EnableWebSecurity
 public class ApiLoginAuthenticationAutoConfiguration extends WebSecurityConfigurerAdapter {
-    private final SecurityConfigurationProperties.ApiLoginAuthentication properties;
+    private final SecurityConfiguration.ApiLoginAuthentication properties;
     private final UserDetailsService userDetailsService;
 
     @Autowired
-    public ApiLoginAuthenticationAutoConfiguration(SecurityConfigurationProperties securityConfigurationProperties, UserDetailsService userDetailsService) {
-        this.properties = securityConfigurationProperties.getApi();
-        this.userDetailsService = userDetailsService;
+    public ApiLoginAuthenticationAutoConfiguration(ApplicationContext applicationContext) {
+        this.properties = applicationContext.getBean(SecurityConfiguration.class).getApi();
+        this.userDetailsService = applicationContext.getBean(UserDetailsService.class);
     }
 
     @Override

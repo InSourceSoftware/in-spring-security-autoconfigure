@@ -2,11 +2,12 @@ package io.insource.springboot.security.autoconfigure;
 
 import io.insource.springboot.security.annotation.EnablePreAuth;
 import io.insource.springboot.security.condition.EnableAnnotationCondition;
-import io.insource.springboot.security.config.SecurityConfigurationProperties;
+import io.insource.springboot.security.config.SecurityConfiguration;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.security.Http401AuthenticationEntryPoint;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
@@ -31,13 +32,13 @@ import java.util.Collections;
 @Conditional(PreAuthenticationAutoConfiguration.EnablePreAuthenticationCondition.class)
 @EnableWebSecurity
 public class PreAuthenticationAutoConfiguration extends WebSecurityConfigurerAdapter {
-    private final SecurityConfigurationProperties.PreAuthentication properties;
+    private final SecurityConfiguration.PreAuthentication properties;
     private final UserDetailsService userDetailsService;
 
     @Autowired
-    public PreAuthenticationAutoConfiguration(SecurityConfigurationProperties securityConfigurationProperties, UserDetailsService userDetailsService) {
-        this.properties = securityConfigurationProperties.getPre();
-        this.userDetailsService = userDetailsService;
+    public PreAuthenticationAutoConfiguration(ApplicationContext applicationContext) {
+        this.properties = applicationContext.getBean(SecurityConfiguration.class).getPre();
+        this.userDetailsService = applicationContext.getBean(UserDetailsService.class);
     }
 
     @Override

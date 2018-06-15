@@ -1,0 +1,8 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+io.insource.springboot.security.autoconfigure.ApiLoginAuthenticationAutoConfiguration,\
+io.insource.springboot.security.autoconfigure.BasicAuthenticationAutoConfiguration,\
+io.insource.springboot.security.autoconfigure.FormLoginAuthenticationAutoConfiguration,\
+io.insource.springboot.security.autoconfigure.PreAuthenticationAutoConfiguration,\
+io.insource.springboot.security.autoconfigure.SecurityAutoConfiguration,\
+io.insource.springboot.security.autoconfigure.TokenAuthenticationAutoConfiguration,\
+io.insource.springboot.security.config.SecurityConfiguration

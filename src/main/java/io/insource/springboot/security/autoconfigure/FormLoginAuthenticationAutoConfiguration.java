@@ -2,10 +2,11 @@ package io.insource.springboot.security.autoconfigure;
 
 import io.insource.springboot.security.annotation.EnableFormLogin;
 import io.insource.springboot.security.condition.EnableAnnotationCondition;
-import io.insource.springboot.security.config.SecurityConfigurationProperties;
+import io.insource.springboot.security.config.SecurityConfiguration;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
@@ -30,13 +31,13 @@ import org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuc
 @Conditional(FormLoginAuthenticationAutoConfiguration.EnableFormLoginAuthenticationCondition.class)
 @EnableWebSecurity
 public class FormLoginAuthenticationAutoConfiguration extends WebSecurityConfigurerAdapter {
-    private final SecurityConfigurationProperties.FormLoginAuthentication properties;
+    private final SecurityConfiguration.FormLoginAuthentication properties;
     private final UserDetailsService userDetailsService;
 
     @Autowired
-    public FormLoginAuthenticationAutoConfiguration(SecurityConfigurationProperties securityConfigurationProperties, UserDetailsService userDetailsService) {
-        this.properties = securityConfigurationProperties.getForm();
-        this.userDetailsService = userDetailsService;
+    public FormLoginAuthenticationAutoConfiguration(ApplicationContext applicationContext) {
+        this.properties = applicationContext.getBean(SecurityConfiguration.class).getForm();
+        this.userDetailsService = applicationContext.getBean(UserDetailsService.class);
     }
 
     @Override

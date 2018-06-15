@@ -2,7 +2,7 @@ package io.insource.springboot.security.autoconfigure;
 
 import io.insource.springboot.security.annotation.EnableTokenAuth;
 import io.insource.springboot.security.condition.EnableAnnotationCondition;
-import io.insource.springboot.security.config.SecurityConfigurationProperties;
+import io.insource.springboot.security.config.SecurityConfiguration;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -12,6 +12,7 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.concurrent.ConcurrentMapCache;
 import org.springframework.cache.support.SimpleCacheManager;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
@@ -23,6 +24,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.AuthenticationUserDetailsService;
+import org.springframework.security.core.userdetails.UserDetailsByNameServiceWrapper;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationProvider;
@@ -36,13 +39,14 @@ import java.util.Collections;
 @Conditional(TokenAuthenticationAutoConfiguration.EnableTokenAuthenticationCondition.class)
 @EnableWebSecurity
 public class TokenAuthenticationAutoConfiguration extends WebSecurityConfigurerAdapter {
-    private final SecurityConfigurationProperties.TokenAuthentication properties;
+    private final SecurityConfiguration.TokenAuthentication properties;
     private final AuthenticationUserDetailsService<PreAuthenticatedAuthenticationToken> authenticationUserDetailsService;
 
     @Autowired
-    public TokenAuthenticationAutoConfiguration(SecurityConfigurationProperties securityConfigurationProperties, AuthenticationUserDetailsService<PreAuthenticatedAuthenticationToken> authenticationUserDetailsService) {
-        this.properties = securityConfigurationProperties.getToken();
-        this.authenticationUserDetailsService = authenticationUserDetailsService;
+    @SuppressWarnings("unchecked")
+    public TokenAuthenticationAutoConfiguration(ApplicationContext applicationContext) {
+        this.properties = applicationContext.getBean(SecurityConfiguration.class).getToken();
+        this.authenticationUserDetailsService = (AuthenticationUserDetailsService<PreAuthenticatedAuthenticationToken>) applicationContext.getBean(AuthenticationUserDetailsService.class);
     }
 
     @Override
