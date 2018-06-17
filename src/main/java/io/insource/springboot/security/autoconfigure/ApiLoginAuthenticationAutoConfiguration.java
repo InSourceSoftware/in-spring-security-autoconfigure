@@ -8,11 +8,11 @@ import io.insource.springboot.security.filter.ApiLoginAuthenticationFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.authentication.dao.ReflectionSaltSource;
@@ -39,6 +39,7 @@ import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.security.web.csrf.LazyCsrfTokenRepository;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 
 @Configuration
@@ -48,11 +49,16 @@ import java.util.Arrays;
 public class ApiLoginAuthenticationAutoConfiguration extends WebSecurityConfigurerAdapter {
     private final SecurityConfiguration.ApiLoginAuthentication properties;
     private final UserDetailsService userDetailsService;
+    private final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource;
 
-    @Autowired
-    public ApiLoginAuthenticationAutoConfiguration(ApplicationContext applicationContext) {
-        this.properties = applicationContext.getBean(SecurityConfiguration.class).getApi();
-        this.userDetailsService = applicationContext.getBean(UserDetailsService.class);
+    @Autowired(required = false)
+    public ApiLoginAuthenticationAutoConfiguration(
+            SecurityConfiguration securityConfiguration,
+            UserDetailsService userDetailsService,
+            AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource) {
+        this.properties = securityConfiguration.getApi();
+        this.userDetailsService = userDetailsService;
+        this.authenticationDetailsSource = authenticationDetailsSource;
     }
 
     @Override
@@ -80,6 +86,9 @@ public class ApiLoginAuthenticationAutoConfiguration extends WebSecurityConfigur
         authenticationFilter.setAuthenticationManager(authenticationManagerBean());
         authenticationFilter.setAuthenticationSuccessHandler(authenticationSuccessHandler());
         authenticationFilter.setSessionAuthenticationStrategy(sessionAuthenticationStrategy());
+        if (authenticationDetailsSource != null) {
+            authenticationFilter.setAuthenticationDetailsSource(authenticationDetailsSource);
+        }
 
         return authenticationFilter;
     }

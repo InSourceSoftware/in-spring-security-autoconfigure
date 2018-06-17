@@ -7,10 +7,10 @@ import io.insource.springboot.security.config.SecurityConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.security.Http401AuthenticationEntryPoint;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.ProviderManager;
@@ -25,6 +25,7 @@ import org.springframework.security.web.authentication.preauth.PreAuthenticatedA
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 import org.springframework.security.web.authentication.preauth.RequestHeaderAuthenticationFilter;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 
 @Configuration
@@ -34,11 +35,13 @@ import java.util.Collections;
 public class PreAuthenticationAutoConfiguration extends WebSecurityConfigurerAdapter {
     private final SecurityConfiguration.PreAuthentication properties;
     private final UserDetailsService userDetailsService;
+    private final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource;
 
-    @Autowired
-    public PreAuthenticationAutoConfiguration(ApplicationContext applicationContext) {
-        this.properties = applicationContext.getBean(SecurityConfiguration.class).getPre();
-        this.userDetailsService = applicationContext.getBean(UserDetailsService.class);
+    @Autowired(required = false)
+    public PreAuthenticationAutoConfiguration(SecurityConfiguration securityConfiguration, UserDetailsService userDetailsService, AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource) {
+        this.properties = securityConfiguration.getPre();
+        this.userDetailsService = userDetailsService;
+        this.authenticationDetailsSource = authenticationDetailsSource;
     }
 
     @Override
@@ -56,12 +59,15 @@ public class PreAuthenticationAutoConfiguration extends WebSecurityConfigurerAda
 
     @Bean
     public RequestHeaderAuthenticationFilter requestHeaderAuthenticationFilter() {
-        RequestHeaderAuthenticationFilter preAuthenticationFilter = new RequestHeaderAuthenticationFilter();
-        preAuthenticationFilter.setPrincipalRequestHeader(properties.getHeader());
-        preAuthenticationFilter.setAuthenticationManager(authenticationManager());
-        preAuthenticationFilter.setExceptionIfHeaderMissing(false);
+        RequestHeaderAuthenticationFilter authenticationFilter = new RequestHeaderAuthenticationFilter();
+        authenticationFilter.setPrincipalRequestHeader(properties.getHeader());
+        authenticationFilter.setAuthenticationManager(authenticationManager());
+        authenticationFilter.setExceptionIfHeaderMissing(false);
+        if (authenticationDetailsSource != null) {
+            authenticationFilter.setAuthenticationDetailsSource(authenticationDetailsSource);
+        }
 
-        return preAuthenticationFilter;
+        return authenticationFilter;
     }
 
     @Override

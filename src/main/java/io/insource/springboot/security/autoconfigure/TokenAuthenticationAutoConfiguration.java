@@ -12,10 +12,10 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.concurrent.ConcurrentMapCache;
 import org.springframework.cache.support.SimpleCacheManager;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.ProviderManager;
@@ -30,6 +30,7 @@ import org.springframework.security.web.authentication.preauth.PreAuthenticatedA
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 import org.springframework.security.web.authentication.preauth.RequestHeaderAuthenticationFilter;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 
 @Configuration
@@ -39,12 +40,13 @@ import java.util.Collections;
 public class TokenAuthenticationAutoConfiguration extends WebSecurityConfigurerAdapter {
     private final SecurityConfiguration.TokenAuthentication properties;
     private final AuthenticationUserDetailsService<PreAuthenticatedAuthenticationToken> authenticationUserDetailsService;
+    private final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource;
 
-    @Autowired
-    @SuppressWarnings("unchecked")
-    public TokenAuthenticationAutoConfiguration(ApplicationContext applicationContext) {
-        this.properties = applicationContext.getBean(SecurityConfiguration.class).getToken();
-        this.authenticationUserDetailsService = (AuthenticationUserDetailsService<PreAuthenticatedAuthenticationToken>) applicationContext.getBean(AuthenticationUserDetailsService.class);
+    @Autowired(required = false)
+    public TokenAuthenticationAutoConfiguration(SecurityConfiguration securityConfiguration, AuthenticationUserDetailsService<PreAuthenticatedAuthenticationToken> authenticationUserDetailsService, AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource) {
+        this.properties = securityConfiguration.getToken();
+        this.authenticationUserDetailsService = authenticationUserDetailsService;
+        this.authenticationDetailsSource = authenticationDetailsSource;
     }
 
     @Override
@@ -57,22 +59,26 @@ public class TokenAuthenticationAutoConfiguration extends WebSecurityConfigurerA
             .and()
                 .anonymous().principal(properties.getAnonymous().getName()).authorities(properties.getAnonymous().getRole().get(0))
             .and()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            .and()
                 .exceptionHandling().authenticationEntryPoint(authenticationEntryPoint())
             .and()
-                .csrf().disable();
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .and()
+                .csrf().disable()
+        ;
     }
 
     @Bean
     public RequestHeaderAuthenticationFilter requestHeaderAuthenticationFilter() {
-        RequestHeaderAuthenticationFilter preAuthenticationFilter = new RequestHeaderAuthenticationFilter();
-        preAuthenticationFilter.setPrincipalRequestHeader(properties.getHeader());
-        preAuthenticationFilter.setCredentialsRequestHeader(properties.getHeader());
-        preAuthenticationFilter.setAuthenticationManager(authenticationManager());
-        preAuthenticationFilter.setExceptionIfHeaderMissing(false);
+        RequestHeaderAuthenticationFilter authenticationFilter = new RequestHeaderAuthenticationFilter();
+        authenticationFilter.setPrincipalRequestHeader(properties.getHeader());
+        authenticationFilter.setCredentialsRequestHeader(properties.getHeader());
+        authenticationFilter.setAuthenticationManager(authenticationManager());
+        authenticationFilter.setExceptionIfHeaderMissing(false);
+        if (authenticationDetailsSource != null) {
+            authenticationFilter.setAuthenticationDetailsSource(authenticationDetailsSource);
+        }
 
-        return preAuthenticationFilter;
+        return authenticationFilter;
     }
 
     @Override

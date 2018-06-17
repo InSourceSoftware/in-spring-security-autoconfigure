@@ -102,14 +102,14 @@ public class SecurityConfiguration {
         private boolean enabled = false;
 
         /**
-         * Comma-separated list of paths to ignore.
-         */
-        private String[] ignore = new String[] {};
-
-        /**
          * Path spec to match for this security configuration.
          */
         private String path = "/**";
+
+        /**
+         * Comma-separated list of paths to ignore.
+         */
+        private String[] ignore = new String[] {};
 
         /**
          * Username field in login API request.
@@ -160,20 +160,20 @@ public class SecurityConfiguration {
             this.enabled = enabled;
         }
 
-        public String[] getIgnore() {
-            return ignore;
-        }
-
-        public void setIgnore(String[] ignore) {
-            this.ignore = ignore;
-        }
-
         public String getPath() {
             return path;
         }
 
         public void setPath(String path) {
             this.path = path;
+        }
+
+        public String[] getIgnore() {
+            return ignore;
+        }
+
+        public void setIgnore(String[] ignore) {
+            this.ignore = ignore;
         }
 
         public String getUsernameParameter() {
@@ -251,9 +251,9 @@ public class SecurityConfiguration {
         private boolean enabled = false;
 
         /**
-         * HTTP basic realm name.
+         * Path spec to match for this security configuration.
          */
-        private String realm = "Spring";
+        private String path = "/**";
 
         /**
          * Comma-separated list of paths to ignore.
@@ -261,9 +261,9 @@ public class SecurityConfiguration {
         private String[] ignore = new String[] {};
 
         /**
-         * Path spec to match for this security configuration.
+         * HTTP basic realm name.
          */
-        private String path = "/**";
+        private String realm = "Spring";
 
         /**
          * Property or method on UserDetails to retrieve per-user salt value.
@@ -289,12 +289,12 @@ public class SecurityConfiguration {
             this.enabled = enabled;
         }
 
-        public String getRealm() {
-            return realm;
+        public String getPath() {
+            return path;
         }
 
-        public void setRealm(String realm) {
-            this.realm = realm;
+        public void setPath(String path) {
+            this.path = path;
         }
 
         public String[] getIgnore() {
@@ -305,12 +305,12 @@ public class SecurityConfiguration {
             this.ignore = ignore;
         }
 
-        public String getPath() {
-            return path;
+        public String getRealm() {
+            return realm;
         }
 
-        public void setPath(String path) {
-            this.path = path;
+        public void setRealm(String realm) {
+            this.realm = realm;
         }
 
         public List<User> getUsers() {
@@ -366,14 +366,24 @@ public class SecurityConfiguration {
         private boolean enabled = false;
 
         /**
+         * Path spec to match for this security configuration.
+         */
+        private String path = "/**";
+
+        /**
          * Comma-separated list of paths to ignore.
          */
         private String[] ignore = new String[] {};
 
         /**
-         * Path spec to match for this security configuration.
+         * Username parameter in login API request.
          */
-        private String path = "/**";
+        private String usernameParameter = "username";
+
+        /**
+         * Password parameter in login API request.
+         */
+        private String passwordParameter = "password";
 
         /**
          * Login processing URL used to process POST requests to log in.
@@ -414,6 +424,14 @@ public class SecurityConfiguration {
             this.enabled = enabled;
         }
 
+        public String getPath() {
+            return path;
+        }
+
+        public void setPath(String path) {
+            this.path = path;
+        }
+
         public String[] getIgnore() {
             return ignore;
         }
@@ -422,12 +440,20 @@ public class SecurityConfiguration {
             this.ignore = ignore;
         }
 
-        public String getPath() {
-            return path;
+        public String getUsernameParameter() {
+            return usernameParameter;
         }
 
-        public void setPath(String path) {
-            this.path = path;
+        public void setUsernameParameter(String usernameParameter) {
+            this.usernameParameter = usernameParameter;
+        }
+
+        public String getPasswordParameter() {
+            return passwordParameter;
+        }
+
+        public void setPasswordParameter(String passwordParameter) {
+            this.passwordParameter = passwordParameter;
         }
 
         public String getLoginUrl() {
@@ -489,9 +515,9 @@ public class SecurityConfiguration {
         private boolean enabled = false;
 
         /**
-         * HTTP basic realm name.
+         * Path spec to match for this security configuration.
          */
-        private String realm = "Spring";
+        private String path = "/**";
 
         /**
          * Comma-separated list of paths to ignore.
@@ -499,9 +525,9 @@ public class SecurityConfiguration {
         private String[] ignore = new String[] {};
 
         /**
-         * Path spec to match for this security configuration.
+         * Authorization realm name.
          */
-        private String path = "/**";
+        private String realm = "Spring";
 
         /**
          * Principal request header name.
@@ -521,12 +547,12 @@ public class SecurityConfiguration {
             this.enabled = enabled;
         }
 
-        public String getRealm() {
-            return realm;
+        public String getPath() {
+            return path;
         }
 
-        public void setRealm(String realm) {
-            this.realm = realm;
+        public void setPath(String path) {
+            this.path = path;
         }
 
         public String[] getIgnore() {
@@ -537,12 +563,12 @@ public class SecurityConfiguration {
             this.ignore = ignore;
         }
 
-        public String getPath() {
-            return path;
+        public String getRealm() {
+            return realm;
         }
 
-        public void setPath(String path) {
-            this.path = path;
+        public void setRealm(String realm) {
+            this.realm = realm;
         }
 
         public String getHeader() {
@@ -572,9 +598,9 @@ public class SecurityConfiguration {
         private boolean enabled = false;
 
         /**
-         * HTTP basic realm name.
+         * Path spec to match for this security configuration.
          */
-        private String realm = "Spring";
+        private String path = "/**";
 
         /**
          * Comma-separated list of paths to ignore.
@@ -582,9 +608,9 @@ public class SecurityConfiguration {
         private String[] ignore = new String[] {};
 
         /**
-         * Path spec to match for this security configuration.
+         * Authorization realm name.
          */
-        private String path = "/**";
+        private String realm = "Spring";
 
         /**
          * Principal request header name.
@@ -609,12 +635,12 @@ public class SecurityConfiguration {
             this.enabled = enabled;
         }
 
-        public String getRealm() {
-            return realm;
+        public String getPath() {
+            return path;
         }
 
-        public void setRealm(String realm) {
-            this.realm = realm;
+        public void setPath(String path) {
+            this.path = path;
         }
 
         public String[] getIgnore() {
@@ -625,12 +651,12 @@ public class SecurityConfiguration {
             this.ignore = ignore;
         }
 
-        public String getPath() {
-            return path;
+        public String getRealm() {
+            return realm;
         }
 
-        public void setPath(String path) {
-            this.path = path;
+        public void setRealm(String realm) {
+            this.realm = realm;
         }
 
         public String getHeader() {

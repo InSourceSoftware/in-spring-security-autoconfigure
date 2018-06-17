@@ -6,7 +6,6 @@ import io.insource.springboot.security.config.SecurityConfiguration;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
@@ -26,9 +25,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 public class BasicAuthenticationAutoConfiguration extends WebSecurityConfigurerAdapter {
     private final SecurityConfiguration.BasicAuthentication properties;
 
-    @Autowired
-    public BasicAuthenticationAutoConfiguration(ApplicationContext applicationContext) {
-        this.properties = applicationContext.getBean(SecurityConfiguration.class).getBasic();
+    @Autowired(required = false)
+    public BasicAuthenticationAutoConfiguration(SecurityConfiguration securityConfiguration) {
+        this.properties = securityConfiguration.getBasic();
     }
 
     @Override
@@ -40,9 +39,9 @@ public class BasicAuthenticationAutoConfiguration extends WebSecurityConfigurerA
             .and()
                 .anonymous().principal(properties.getAnonymous().getName()).authorities(properties.getAnonymous().getRole().get(0))
             .and()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            .and()
                 .httpBasic().realmName(properties.getRealm())
+            .and()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
                 .csrf().disable();
     }

@@ -6,10 +6,10 @@ import io.insource.springboot.security.config.SecurityConfiguration;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.authentication.dao.ReflectionSaltSource;
@@ -26,6 +26,8 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationSu
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuccessHandler;
 
+import javax.servlet.http.HttpServletRequest;
+
 @Configuration
 @ConditionalOnProperty(prefix = "security.auth.form", name = "enabled", havingValue = "true")
 @Conditional(FormLoginAuthenticationAutoConfiguration.EnableFormLoginAuthenticationCondition.class)
@@ -33,11 +35,13 @@ import org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuc
 public class FormLoginAuthenticationAutoConfiguration extends WebSecurityConfigurerAdapter {
     private final SecurityConfiguration.FormLoginAuthentication properties;
     private final UserDetailsService userDetailsService;
+    private final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource;
 
-    @Autowired
-    public FormLoginAuthenticationAutoConfiguration(ApplicationContext applicationContext) {
-        this.properties = applicationContext.getBean(SecurityConfiguration.class).getForm();
-        this.userDetailsService = applicationContext.getBean(UserDetailsService.class);
+    @Autowired(required = false)
+    public FormLoginAuthenticationAutoConfiguration(SecurityConfiguration securityConfiguration, UserDetailsService userDetailsService, AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource) {
+        this.properties = securityConfiguration.getForm();
+        this.userDetailsService = userDetailsService;
+        this.authenticationDetailsSource = authenticationDetailsSource;
     }
 
     @Override
@@ -49,7 +53,13 @@ public class FormLoginAuthenticationAutoConfiguration extends WebSecurityConfigu
             .and()
                 .anonymous().principal(properties.getAnonymous().getName()).authorities(properties.getAnonymous().getRole().get(0))
             .and()
-                .formLogin().loginProcessingUrl(properties.getLoginUrl()).permitAll().successHandler(authenticationSuccessHandler())
+                .formLogin()
+                    .usernameParameter(properties.getUsernameParameter())
+                    .passwordParameter(properties.getPasswordParameter())
+                    .loginProcessingUrl(properties.getLoginUrl())
+                    .successHandler(authenticationSuccessHandler())
+                    .authenticationDetailsSource(authenticationDetailsSource)
+                    .permitAll()
             .and()
                 .logout().logoutUrl(properties.getLogoutUrl()).logoutSuccessHandler(logoutSuccessHandler());
     }
@@ -68,7 +78,7 @@ public class FormLoginAuthenticationAutoConfiguration extends WebSecurityConfigu
     }
 
     @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+    protected void configure(AuthenticationManagerBuilder auth) {
         auth.authenticationProvider(authenticationProvider());
     }
 
