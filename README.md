@@ -72,7 +72,7 @@ The following configuration values are available in `application.yml`:
     security:
         auth:
             basic:
-                enabled: false # Optional if using annotation
+                enabled: true # Optional if using annotation
                 path: /**
                 ignore: /public/**, /static/** # Optional, leave blank to disable
                 realm: Spring
@@ -137,7 +137,7 @@ The following configuration values are available in `application.yml`:
     security:
         auth:
             pre:
-                enabled: false # Optional if using annotation
+                enabled: true # Optional if using annotation
                 path: /**
                 ignore: /public/**, /static/** # Optional, leave blank to disable
                 realm: Spring
@@ -165,13 +165,13 @@ The following configuration values are available in `application.yml`:
     security:
         auth:
             token:
-                enabled: false # Optional if using annotation
+                enabled: true # Optional if using annotation
                 path: /**
                 ignore: /public/**, /static/** # Optional, leave blank to disable
                 realm: Spring
-                header: SM_USER
+                header: Authorization
                 anonymous:
                     name: anonymous
                     role: ROLE_ANONYMOUS
 
-This auto-configuration requires a `AuthenticationUserDetailsService<PreAuthenticatedAuthenticationToken>` to be loaded in the `ApplicationContext`. It should be capable of loading users with authenticated roles by principal, but does not provide a credentials value, as this configuration does not do any authentication whatsoever. It also disables session management and csrf protection for stateless API security.
+This auto-configuration requires an `AuthenticationUserDetailsService` of type `PreAuthenticatedAuthenticationToken` to be loaded in the `ApplicationContext`. It should be capable of loading users with authenticated roles by principal or credentials (both will contain the same value) through a `PreAuthenticatedAuthenticationToken`. This configuration does not do any authentication, but your `AuthenticationUserDetailsService` should ensure the token is valid, and load users based on the given token from the `Authorization` header. This auto-configuration also disables session management and csrf protection for stateless API security.
