@@ -55,9 +55,9 @@ public class PreAuthenticationAutoConfiguration extends WebSecurityConfigurerAda
                 .antMatchers(properties.getIgnore()).permitAll()
                 .anyRequest().authenticated()
             .and()
-                .anonymous().principal(properties.getAnonymous().getName()).authorities(properties.getAnonymous().getRole().get(0))
+                .exceptionHandling().authenticationEntryPoint(authenticationEntryPoint())
             .and()
-                .exceptionHandling().authenticationEntryPoint(authenticationEntryPoint());
+                .anonymous().disable();
     }
 
     @Bean
