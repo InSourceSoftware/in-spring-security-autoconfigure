@@ -9,7 +9,7 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 
-public class EnableAnnotationCondition<T extends Annotation> extends SpringBootCondition {
+public abstract class EnableAnnotationCondition<T extends Annotation> extends SpringBootCondition {
     private final Class<T> annotationClass;
     private final String annotationName;
 
@@ -20,12 +20,17 @@ public class EnableAnnotationCondition<T extends Annotation> extends SpringBootC
 
     @Override
     public ConditionOutcome getMatchOutcome(ConditionContext context, AnnotatedTypeMetadata metadata) {
-        String[] enablers = context.getBeanFactory().getBeanNamesForAnnotation(annotationClass);
         ConditionMessage.Builder message = ConditionMessage.forCondition("@" + annotationName + " Condition");
 
-        return enablers.length > 0
-            ? ConditionOutcome.match(message.found("@" + annotationName + " annotation").items(Arrays.asList(enablers)))
+        return isEnabled(context)
+            ? ConditionOutcome.match(message.found("@" + annotationName + " annotation").items(annotationName))
             : ConditionOutcome.noMatch(message.didNotFind("@" + annotationName + " annotation").atAll());
+    }
 
+    protected abstract String getPrefix();
+
+    private boolean isEnabled(ConditionContext context) {
+        return context.getEnvironment().getProperty(String.format("%s.%s", getPrefix(), "enabled"), Boolean.class, Boolean.FALSE)
+            || context.getBeanFactory().getBeanNamesForAnnotation(annotationClass).length > 0;
     }
 }

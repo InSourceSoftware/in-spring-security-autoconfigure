@@ -3,9 +3,9 @@ package io.insource.springboot.security.autoconfigure;
 import io.insource.springboot.security.annotation.EnablePreAuth;
 import io.insource.springboot.security.condition.EnableAnnotationCondition;
 import io.insource.springboot.security.config.SecurityConfiguration;
+import io.insource.springboot.security.exception.MissingUserDetailsServiceExceptionSupplier;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.security.Http401AuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
@@ -27,9 +27,9 @@ import org.springframework.security.web.authentication.preauth.RequestHeaderAuth
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
+import java.util.Optional;
 
 @Configuration
-@ConditionalOnProperty(prefix = "security.auth.pre", name = "enabled", havingValue = "true")
 @Conditional(PreAuthenticationAutoConfiguration.EnablePreAuthenticationCondition.class)
 @EnableWebSecurity
 public class PreAuthenticationAutoConfiguration extends WebSecurityConfigurerAdapter {
@@ -37,11 +37,14 @@ public class PreAuthenticationAutoConfiguration extends WebSecurityConfigurerAda
     private final UserDetailsService userDetailsService;
     private final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource;
 
-    @Autowired(required = false)
-    public PreAuthenticationAutoConfiguration(SecurityConfiguration securityConfiguration, UserDetailsService userDetailsService, AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource) {
+    @Autowired
+    public PreAuthenticationAutoConfiguration(
+            SecurityConfiguration securityConfiguration,
+            Optional<UserDetailsService> userDetailsService,
+            Optional<AuthenticationDetailsSource<HttpServletRequest, ?>> authenticationDetailsSource) {
         this.properties = securityConfiguration.getPre();
-        this.userDetailsService = userDetailsService;
-        this.authenticationDetailsSource = authenticationDetailsSource;
+        this.userDetailsService = userDetailsService.orElseThrow(new MissingUserDetailsServiceExceptionSupplier(PreAuthenticationAutoConfiguration.class));
+        this.authenticationDetailsSource = authenticationDetailsSource.orElse(null);
     }
 
     @Override
@@ -102,6 +105,11 @@ public class PreAuthenticationAutoConfiguration extends WebSecurityConfigurerAda
     public static class EnablePreAuthenticationCondition extends EnableAnnotationCondition<EnablePreAuth> {
         public EnablePreAuthenticationCondition() {
             super(EnablePreAuth.class);
+        }
+
+        @Override
+        protected String getPrefix() {
+            return "security.auth.pre";
         }
     }
 }

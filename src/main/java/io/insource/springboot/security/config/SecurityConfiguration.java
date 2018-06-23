@@ -1,7 +1,6 @@
 package io.insource.springboot.security.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,7 +10,6 @@ import java.util.UUID;
 /**
  * Configuration properties for opinionated security.
  */
-@Configuration
 @ConfigurationProperties("security.auth")
 public class SecurityConfiguration {
     /**
@@ -112,6 +110,11 @@ public class SecurityConfiguration {
         private String[] ignore = new String[] {};
 
         /**
+         * Authorization realm name.
+         */
+        private String realm = "Spring";
+
+        /**
          * Username field in login API request.
          */
         private String usernameParameter = "username";
@@ -174,6 +177,14 @@ public class SecurityConfiguration {
 
         public void setIgnore(String[] ignore) {
             this.ignore = ignore;
+        }
+
+        public String getRealm() {
+            return realm;
+        }
+
+        public void setRealm(String realm) {
+            this.realm = realm;
         }
 
         public String getUsernameParameter() {
@@ -615,7 +626,7 @@ public class SecurityConfiguration {
         /**
          * Principal request header name.
          */
-        private String header = "Authentication";
+        private String header = "Authorization";
 
         /**
          * Anonymous user.
@@ -704,7 +715,7 @@ public class SecurityConfiguration {
         private List<String> role;
 
         public User() {
-            this("user", UUID.randomUUID().toString(), Collections.singletonList("ROLE_USER"));
+            this("user", "password", Collections.singletonList("USER"));
         }
 
         public User(String name, String password, List<String> role) {

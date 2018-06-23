@@ -5,7 +5,6 @@ import io.insource.springboot.security.condition.EnableAnnotationCondition;
 import io.insource.springboot.security.config.SecurityConfiguration;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
@@ -18,8 +17,9 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.UUID;
+
 @Configuration
-@ConditionalOnProperty(prefix = "security.auth.basic", name = "enabled", havingValue = "true")
 @Conditional(BasicAuthenticationAutoConfiguration.EnableBasicAuthenticationCondition.class)
 @EnableWebSecurity
 public class BasicAuthenticationAutoConfiguration extends WebSecurityConfigurerAdapter {
@@ -49,13 +49,22 @@ public class BasicAuthenticationAutoConfiguration extends WebSecurityConfigurerA
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         InMemoryUserDetailsManagerConfigurer<AuthenticationManagerBuilder> builder = auth.inMemoryAuthentication();
+        PasswordEncoder passwordEncoder = passwordEncoder();
         for (SecurityConfiguration.User user : properties.getUsers()) {
+            if ("".equals(user.getPassword())) {
+                String password = UUID.randomUUID().toString();
+                System.out.println();
+                System.out.printf("Using default security password: %s%n", password);
+                System.out.println();
+                user.setPassword(password);
+            }
+
             builder.withUser(user.getName())
-                .password(user.getPassword())
+                .password(passwordEncoder.encode(user.getPassword()))
                 .roles(user.getRole().toArray(new String[0]));
         }
 
-        builder.passwordEncoder(passwordEncoder());
+        builder.passwordEncoder(passwordEncoder);
     }
 
     @Bean
@@ -66,6 +75,11 @@ public class BasicAuthenticationAutoConfiguration extends WebSecurityConfigurerA
     public static class EnableBasicAuthenticationCondition extends EnableAnnotationCondition<EnableBasicAuth> {
         public EnableBasicAuthenticationCondition() {
             super(EnableBasicAuth.class);
+        }
+
+        @Override
+        protected String getPrefix() {
+            return "security.auth.basic";
         }
     }
 }

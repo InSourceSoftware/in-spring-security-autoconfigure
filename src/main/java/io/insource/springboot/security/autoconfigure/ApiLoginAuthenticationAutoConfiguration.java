@@ -3,16 +3,18 @@ package io.insource.springboot.security.autoconfigure;
 import io.insource.springboot.security.annotation.EnableApiLogin;
 import io.insource.springboot.security.condition.EnableAnnotationCondition;
 import io.insource.springboot.security.config.SecurityConfiguration;
+import io.insource.springboot.security.exception.MissingUserDetailsServiceExceptionSupplier;
 import io.insource.springboot.security.filter.ApiLoginAuthenticationFilter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.security.Http401AuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.authentication.dao.ReflectionSaltSource;
@@ -24,8 +26,9 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.ForwardAuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuccessHandler;
@@ -41,9 +44,9 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
+import java.util.Optional;
 
 @Configuration
-@ConditionalOnProperty(prefix = "security.auth.api", name = "enabled", havingValue = "true")
 @Conditional(ApiLoginAuthenticationAutoConfiguration.EnableApiLoginCondition.class)
 @EnableWebSecurity
 public class ApiLoginAuthenticationAutoConfiguration extends WebSecurityConfigurerAdapter {
@@ -51,14 +54,14 @@ public class ApiLoginAuthenticationAutoConfiguration extends WebSecurityConfigur
     private final UserDetailsService userDetailsService;
     private final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource;
 
-    @Autowired(required = false)
+    @Autowired
     public ApiLoginAuthenticationAutoConfiguration(
             SecurityConfiguration securityConfiguration,
-            UserDetailsService userDetailsService,
-            AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource) {
+            Optional<UserDetailsService> userDetailsService,
+            Optional<AuthenticationDetailsSource<HttpServletRequest, ?>> authenticationDetailsSource) {
         this.properties = securityConfiguration.getApi();
-        this.userDetailsService = userDetailsService;
-        this.authenticationDetailsSource = authenticationDetailsSource;
+        this.userDetailsService = userDetailsService.orElseThrow(new MissingUserDetailsServiceExceptionSupplier(ApiLoginAuthenticationAutoConfiguration.class));
+        this.authenticationDetailsSource = authenticationDetailsSource.orElse(null);
     }
 
     @Override
@@ -71,7 +74,13 @@ public class ApiLoginAuthenticationAutoConfiguration extends WebSecurityConfigur
             .and()
                 .anonymous().principal(properties.getAnonymous().getName()).authorities(properties.getAnonymous().getRole().get(0))
             .and()
+                .sessionManagement().sessionAuthenticationStrategy(sessionAuthenticationStrategy())
+            .and()
+                .csrf().csrfTokenRepository(csrfTokenRepository())
+            .and()
                 .logout().logoutUrl(properties.getLogoutUrl()).logoutSuccessHandler(logoutSuccessHandler())
+            .and()
+                .exceptionHandling().authenticationEntryPoint(authenticationEntryPoint())
             .and()
                 .formLogin().disable();
     }
@@ -99,8 +108,14 @@ public class ApiLoginAuthenticationAutoConfiguration extends WebSecurityConfigur
     }
 
     @Bean
+    @Override
+    public AuthenticationManager authenticationManagerBean() throws Exception {
+        return super.authenticationManagerBean();
+    }
+
+    @Bean
     public AuthenticationSuccessHandler authenticationSuccessHandler() {
-        return new SimpleUrlAuthenticationSuccessHandler(properties.getLoginRedirectUrl());
+        return new ForwardAuthenticationSuccessHandler(properties.getLoginRedirectUrl());
     }
 
     @Bean
@@ -124,13 +139,18 @@ public class ApiLoginAuthenticationAutoConfiguration extends WebSecurityConfigur
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
+        authenticationProvider.setUserDetailsService(userDetailsService());
         authenticationProvider.setPasswordEncoder(passwordEncoder());
-        authenticationProvider.setUserDetailsService(userDetailsService);
         if (!properties.getSaltProperty().isEmpty()) {
             authenticationProvider.setSaltSource(saltSource());
         }
 
         return authenticationProvider;
+    }
+
+    @Override
+    protected UserDetailsService userDetailsService() {
+        return userDetailsService;
     }
 
     @Bean
@@ -154,9 +174,19 @@ public class ApiLoginAuthenticationAutoConfiguration extends WebSecurityConfigur
         return logoutSuccessHandler;
     }
 
+    @Bean
+    public AuthenticationEntryPoint authenticationEntryPoint() {
+        return new Http401AuthenticationEntryPoint(properties.getRealm());
+    }
+
     public static class EnableApiLoginCondition extends EnableAnnotationCondition<EnableApiLogin> {
         public EnableApiLoginCondition() {
             super(EnableApiLogin.class);
+        }
+
+        @Override
+        protected String getPrefix() {
+            return "security.auth.api";
         }
     }
 }

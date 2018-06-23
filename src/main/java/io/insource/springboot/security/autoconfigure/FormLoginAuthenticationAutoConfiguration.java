@@ -3,9 +3,9 @@ package io.insource.springboot.security.autoconfigure;
 import io.insource.springboot.security.annotation.EnableFormLogin;
 import io.insource.springboot.security.condition.EnableAnnotationCondition;
 import io.insource.springboot.security.config.SecurityConfiguration;
+import io.insource.springboot.security.exception.MissingUserDetailsServiceExceptionSupplier;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
@@ -27,9 +27,9 @@ import org.springframework.security.web.authentication.logout.LogoutSuccessHandl
 import org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuccessHandler;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Optional;
 
 @Configuration
-@ConditionalOnProperty(prefix = "security.auth.form", name = "enabled", havingValue = "true")
 @Conditional(FormLoginAuthenticationAutoConfiguration.EnableFormLoginAuthenticationCondition.class)
 @EnableWebSecurity
 public class FormLoginAuthenticationAutoConfiguration extends WebSecurityConfigurerAdapter {
@@ -37,11 +37,14 @@ public class FormLoginAuthenticationAutoConfiguration extends WebSecurityConfigu
     private final UserDetailsService userDetailsService;
     private final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource;
 
-    @Autowired(required = false)
-    public FormLoginAuthenticationAutoConfiguration(SecurityConfiguration securityConfiguration, UserDetailsService userDetailsService, AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource) {
+    @Autowired
+    public FormLoginAuthenticationAutoConfiguration(
+            SecurityConfiguration securityConfiguration,
+            Optional<UserDetailsService> userDetailsService,
+            Optional<AuthenticationDetailsSource<HttpServletRequest, ?>> authenticationDetailsSource) {
         this.properties = securityConfiguration.getForm();
-        this.userDetailsService = userDetailsService;
-        this.authenticationDetailsSource = authenticationDetailsSource;
+        this.userDetailsService = userDetailsService.orElseThrow(new MissingUserDetailsServiceExceptionSupplier(FormLoginAuthenticationAutoConfiguration.class));
+        this.authenticationDetailsSource = authenticationDetailsSource.orElse(null);
     }
 
     @Override
@@ -78,20 +81,30 @@ public class FormLoginAuthenticationAutoConfiguration extends WebSecurityConfigu
     }
 
     @Override
-    protected void configure(AuthenticationManagerBuilder auth) {
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth.authenticationProvider(authenticationProvider());
     }
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
+        authenticationProvider.setUserDetailsService(userDetailsService());
         authenticationProvider.setPasswordEncoder(passwordEncoder());
-        authenticationProvider.setUserDetailsService(userDetailsService);
         if (!properties.getSaltProperty().isEmpty()) {
             authenticationProvider.setSaltSource(saltSource());
         }
 
         return authenticationProvider;
+    }
+
+    @Override
+    protected UserDetailsService userDetailsService() {
+        return userDetailsService;
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
@@ -102,14 +115,14 @@ public class FormLoginAuthenticationAutoConfiguration extends WebSecurityConfigu
         return saltSource;
     }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
     public static class EnableFormLoginAuthenticationCondition extends EnableAnnotationCondition<EnableFormLogin> {
         public EnableFormLoginAuthenticationCondition() {
             super(EnableFormLogin.class);
+        }
+
+        @Override
+        protected String getPrefix() {
+            return "security.auth.form";
         }
     }
 }

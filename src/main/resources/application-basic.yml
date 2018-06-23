@@ -1,0 +1,7 @@
+security:
+  auth:
+    basic:
+      users:
+      - name: user
+        password: password
+        role: USER

@@ -3,10 +3,10 @@ package io.insource.springboot.security.autoconfigure;
 import io.insource.springboot.security.annotation.EnableTokenAuth;
 import io.insource.springboot.security.condition.EnableAnnotationCondition;
 import io.insource.springboot.security.config.SecurityConfiguration;
+import io.insource.springboot.security.exception.MissingAuthenticationUserDetailsServiceExceptionSupplier;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.security.Http401AuthenticationEntryPoint;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -32,9 +32,9 @@ import org.springframework.security.web.authentication.preauth.RequestHeaderAuth
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
+import java.util.Optional;
 
 @Configuration
-@ConditionalOnProperty(prefix = "security.auth.token", name = "enabled", havingValue = "true")
 @Conditional(TokenAuthenticationAutoConfiguration.EnableTokenAuthenticationCondition.class)
 @EnableWebSecurity
 public class TokenAuthenticationAutoConfiguration extends WebSecurityConfigurerAdapter {
@@ -42,17 +42,20 @@ public class TokenAuthenticationAutoConfiguration extends WebSecurityConfigurerA
     private final AuthenticationUserDetailsService<PreAuthenticatedAuthenticationToken> authenticationUserDetailsService;
     private final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource;
 
-    @Autowired(required = false)
-    public TokenAuthenticationAutoConfiguration(SecurityConfiguration securityConfiguration, AuthenticationUserDetailsService<PreAuthenticatedAuthenticationToken> authenticationUserDetailsService, AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource) {
+    @Autowired
+    public TokenAuthenticationAutoConfiguration(
+            SecurityConfiguration securityConfiguration,
+            Optional<AuthenticationUserDetailsService<PreAuthenticatedAuthenticationToken>> authenticationUserDetailsService,
+            Optional<AuthenticationDetailsSource<HttpServletRequest, ?>> authenticationDetailsSource) {
         this.properties = securityConfiguration.getToken();
-        this.authenticationUserDetailsService = authenticationUserDetailsService;
-        this.authenticationDetailsSource = authenticationDetailsSource;
+        this.authenticationUserDetailsService = authenticationUserDetailsService.orElseThrow(new MissingAuthenticationUserDetailsServiceExceptionSupplier(TokenAuthenticationAutoConfiguration.class));
+        this.authenticationDetailsSource = authenticationDetailsSource.orElse(null);
     }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.antMatcher(properties.getPath())
-            .addFilterAfter(requestHeaderAuthenticationFilter(), AnonymousAuthenticationFilter.class)
+            .addFilterBefore(requestHeaderAuthenticationFilter(), AnonymousAuthenticationFilter.class)
             .authorizeRequests()
                 .antMatchers(properties.getIgnore()).permitAll()
                 .anyRequest().authenticated()
@@ -113,6 +116,11 @@ public class TokenAuthenticationAutoConfiguration extends WebSecurityConfigurerA
     public static class EnableTokenAuthenticationCondition extends EnableAnnotationCondition<EnableTokenAuth> {
         public EnableTokenAuthenticationCondition() {
             super(EnableTokenAuth.class);
+        }
+
+        @Override
+        protected String getPrefix() {
+            return "security.auth.token";
         }
     }
 }
