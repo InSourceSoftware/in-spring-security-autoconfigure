@@ -76,7 +76,6 @@ The following configuration values are available in `application.yml`:
                 path: /**
                 ignore: /public/**, /static/** # Optional, leave blank to disable
                 realm: Spring
-                salt-property: salt # Optional, leave blank to disable
                 users:
                 - name: user
                   password: password
@@ -112,11 +111,11 @@ The following configuration values are available in `application.yml`:
                 ignore: /public/**, /static/** # Optional, leave blank to disable
                 username-parameter: username
                 password-parameter: password
+                salt-property: salt # Optional, leave blank to disable
                 login-url: /login
                 logout-url: /logout
                 login-redirect-url: /
                 logout-redirect-url: /
-                salt-property: salt # Optional, leave blank to disable
 
 This auto-configuration requires a `UserDetailsService` to be loaded in the `ApplicationContext`. It should be capable of loading users with hashed passwords. If a `salt-property` is specified (default is `salt`), it should return a `UserDetails` that has a property containing the user's salt value, which was used to hash the password when it was set by the user. The `JdbcUserDetailsManager` is a good default implementation, or you can write your own quite easily.
 
@@ -142,9 +141,6 @@ The following configuration values are available in `application.yml`:
                 ignore: /public/**, /static/** # Optional, leave blank to disable
                 realm: Spring
                 header: SM_USER
-                anonymous:
-                    name: anonymous
-                    role: ROLE_ANONYMOUS
 
 This auto-configuration requires a `UserDetailsService` to be loaded in the `ApplicationContext`. It should be capable of loading users with authenticated roles, but does not require a password field, as this configuration does not do any authentication whatsoever.
 

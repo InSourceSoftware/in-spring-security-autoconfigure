@@ -5,7 +5,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Configuration properties for opinionated security.
@@ -277,12 +276,6 @@ public class SecurityConfiguration {
         private String realm = "Spring";
 
         /**
-         * Property or method on UserDetails to retrieve per-user salt value.
-         * Leave empty to disable.
-         */
-        private String saltProperty = "salt";
-
-        /**
          * List of users.
          */
         private List<User> users = new ArrayList<>(Collections.singletonList(new User()));
@@ -330,14 +323,6 @@ public class SecurityConfiguration {
 
         public void setUsers(List<User> users) {
             this.users = users;
-        }
-
-        public String getSaltProperty() {
-            return saltProperty;
-        }
-
-        public void setSaltProperty(String saltProperty) {
-            this.saltProperty = saltProperty;
         }
 
         public User getAnonymous() {
@@ -397,6 +382,12 @@ public class SecurityConfiguration {
         private String passwordParameter = "password";
 
         /**
+         * Property or method on UserDetails to retrieve per-user salt value.
+         * Leave empty to disable.
+         */
+        private String saltProperty = "salt";
+
+        /**
          * Login processing URL used to process POST requests to log in.
          */
         private String loginUrl = "/login";
@@ -415,12 +406,6 @@ public class SecurityConfiguration {
          * Redirect URL used for logout success.
          */
         private String logoutRedirectUrl = "/";
-
-        /**
-         * Property or method on UserDetails to retrieve per-user salt value.
-         * Leave empty to disable.
-         */
-        private String saltProperty = "salt";
 
         /**
          * Anonymous user.
@@ -467,6 +452,14 @@ public class SecurityConfiguration {
             this.passwordParameter = passwordParameter;
         }
 
+        public String getSaltProperty() {
+            return saltProperty;
+        }
+
+        public void setSaltProperty(String saltProperty) {
+            this.saltProperty = saltProperty;
+        }
+
         public String getLoginUrl() {
             return loginUrl;
         }
@@ -497,14 +490,6 @@ public class SecurityConfiguration {
 
         public void setLogoutRedirectUrl(String logoutRedirectUrl) {
             this.logoutRedirectUrl = logoutRedirectUrl;
-        }
-
-        public String getSaltProperty() {
-            return saltProperty;
-        }
-
-        public void setSaltProperty(String saltProperty) {
-            this.saltProperty = saltProperty;
         }
 
         public User getAnonymous() {
@@ -545,11 +530,6 @@ public class SecurityConfiguration {
          */
         private String header = "SM_USER";
 
-        /**
-         * Anonymous user.
-         */
-        private User anonymous = new User("anonymous", null, Collections.singletonList("ROLE_ANONYMOUS"));
-
         public boolean isEnabled() {
             return enabled;
         }
@@ -588,14 +568,6 @@ public class SecurityConfiguration {
 
         public void setHeader(String header) {
             this.header = header;
-        }
-
-        public User getAnonymous() {
-            return anonymous;
-        }
-
-        public void setAnonymous(User anonymous) {
-            this.anonymous = anonymous;
         }
     }
 
